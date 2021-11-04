@@ -1,37 +1,23 @@
-/*
-	Author: x2robi
-	Github: https://github.com/x2robi
-	Discord: https://discord.gg/3nVS2HJp
-*/
-
-const lPlayer = mp.players.local;
-
-let farAway;
+let prevLeftMousePressed = false;
 
 mp.events.add("render", () => {
-    let currentPos = lPlayer.position;
-    const h = lPlayer.getHeading();
+    const leftMousePressed = mp.game.controls.getDisabledControlNormal(0, 24);
+    const direction = mp.cameras.new("gameplay").getDirection();
+    const playerPos = mp.players.local.position;
 
+    let pointPos = new mp.Vector3((direction.x * 125) + playerPos.x, (direction.y * 125) + playerPos.y, (direction.z * 125) + playerPos.z);
 
-    const camera = mp.cameras.new("gameplay");
-
-    let direction = camera.getDirection();
-    currentPos = lPlayer.position//camera.getCoord();
-    currentPos = new mp.Vector3((direction.x * .5) + (currentPos.x), (direction.y * .5) + (currentPos.y), (direction.z * .5) + (currentPos.z));
-
-    farAway = new mp.Vector3((direction.x * 250) + (currentPos.x), (direction.y * 250) + (currentPos.y), (direction.z * 250) + (currentPos.z));
-
-    let result = mp.raycasting.testPointToPoint(currentPos, farAway, [lPlayer], [17]);
+    const result = mp.raycasting.testPointToPoint(playerPos, pointPos, mp.players.local.handle, 17);
 
     if (typeof result === "object") {
         if (result.position !== undefined) {
-            farAway = result.position;
+            pointPos = result.position;
         }
     }
 
-    mp.game.graphics.drawMarker(
+    mp.game1.graphics.drawMarker(
         0,
-        farAway.x, farAway.y, farAway.z,
+        pointPos.x, pointPos.y, pointPos.z + .5,
         0, 0, 0,
         0, 0, 0,
         .5, .5, .5,
@@ -39,8 +25,10 @@ mp.events.add("render", () => {
         false, false, 2,
         false, "", "",false
     );
-});
 
-mp.keys.bind(69, false, () => {
-	lPlayer.setCoords(farAway.x, farAway.y, farAway.z, false, false, false, false);
+    if (!prevLeftMousePressed && leftMousePressed) {
+        mp.players.local.setCoords(pointPos.x, pointPos.y, pointPos.z, false, false, false, false);
+    }
+
+    prevLeftMousePressed = leftMousePressed;
 });
